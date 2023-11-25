@@ -25,10 +25,10 @@ class BackendAdapterBase(ABC):
     
     # DataSearcher
     @abstractmethod
-    def find_universities(self, name: str) -> dict[int, str]:
+    def find_universities(self, name: str) -> list[str]:
         pass
     @abstractmethod
-    def find_groups(self, university_id: int, name: str) -> dict[int, str]:
+    def find_groups(self, university_name: str, name: str) -> list[str]:
         pass
     
     
