@@ -64,6 +64,7 @@ async def testing_cycle(poll_answer: PollAnswer, state: FSMContext):
     
     user_state_data = await state.get_data()
     test_data: TestData = user_state_data["test_data"]
+    question_num = int(user_state_data["current_question_index"])
     
     # Send to user new question
     question_num += 1
