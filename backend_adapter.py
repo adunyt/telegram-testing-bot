@@ -30,9 +30,6 @@ class BackendAdapterBase(ABC):
     @abstractmethod
     def find_groups(self, university_name: str, name: str) -> list[str]:
         pass
-    @abstractmethod
-    def find_disciplines(self, discipline_name: str) -> list[str]:
-        pass
     
     
 class FakeBackendAdapter(BackendAdapterBase):
