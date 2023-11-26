@@ -91,7 +91,8 @@ async def next_question(state: FSMContext, bot: Bot, user_id: int):
                         allows_multiple_answers=new_question.is_multiple_answer,
                         options=[text for text in new_question.answers_dict.values()],
                         open_period=new_question.openTime,
-                        is_anonymous=False)
+                        is_anonymous=False,
+                        protect_content=True)
     autoclose_checker = asyncio.create_task(autoclosed_poll_checker(sended_message.poll, user_id, state))
     await state.update_data(autoclose_checker_task=autoclose_checker)
     try:
