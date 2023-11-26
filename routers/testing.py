@@ -1,10 +1,12 @@
 from aiogram import Router, F
 from aiogram.types import CallbackQuery, PollAnswer, Poll, Message
-import aiogram.types
+from aiogram import types
 from aiogram.fsm.context import FSMContext
 import time
 import asyncio
 import logging
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+
 
 from states import TestingStates
 from bot_types.test import TestData, TestStatistic
@@ -13,6 +15,20 @@ from aiogram import Bot
 
 testingRouter = Router()
 backend_adapter = FakeBackendAdapter()
+
+
+async def show_info_about_test(state: FSMContext, bot: Bot, chat_id: int):
+    user_state_data = await state.get_data()
+    test_data: TestData = user_state_data["test_data"]
+    builder = InlineKeyboardBuilder()
+    builder.add(types.InlineKeyboardButton(text="Начать тест", callback_data=str(test_data.id)))
+    await bot.send_message(
+        chat_id=chat_id,
+        text=f"Номер теста: {test_data.id}\nНазвание теста: {test_data.name}\nОписание теста: {test_data.description}",
+        reply_markup=builder.as_markup()
+        )
+    await state.set_state(TestingStates.information_before_test)
+    
 
 @testingRouter.callback_query(TestingStates.information_before_test)
 async def first_question(callback: CallbackQuery, state: FSMContext):

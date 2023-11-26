@@ -7,6 +7,7 @@ import re
 
 from states import RegisterStates, TestingStates
 from backend_adapter import FakeBackendAdapter
+from routers import testing
 
 commandRouter = Router()
 backend_adapter = FakeBackendAdapter()
@@ -25,6 +26,7 @@ async def cmd_start_test(message: Message, command: CommandObject, state: FSMCon
         await message.answer("Такого теста не существует! Проверьте ссылку.")
         return
 
+    await state.update_data(test_data=test_result)
     user_result = backend_adapter.find_user(message.from_user.id) # check if user registered 
     if (user_result is None):
         await message.answer("Кажется вы еще не зарегестрированны в системе...")
@@ -34,12 +36,7 @@ async def cmd_start_test(message: Message, command: CommandObject, state: FSMCon
     else:
         await message.answer(f"Найдена учетная запись {user_result.second_name} {user_result.first_name}")
     
-    await state.update_data(test_data=test_result)
-    builder = InlineKeyboardBuilder()
-    builder.add(InlineKeyboardButton(text="Начать тест", callback_data=test_num))
-    await message.answer(f"Номер теста: {test_result.id}\nНазвание теста: {test_result.name}\nОписание теста: {test_result.description}",
-                         reply_markup=builder.as_markup())
-    await state.set_state(TestingStates.information_before_test)
+    await testing.show_info_about_test(state=state, bot=message.bot, chat_id=message.chat.id)
 
 
 @commandRouter.message(

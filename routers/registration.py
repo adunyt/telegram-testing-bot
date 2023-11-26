@@ -6,6 +6,7 @@ import re
 from states import RegisterStates
 from bot_types.user_data import UserData
 from backend_adapter import FakeBackendAdapter
+from routers import testing
 
 registrationRouter = Router()
 backend_adapter = FakeBackendAdapter()
@@ -103,22 +104,17 @@ async def finalize_user_registration(message: Message, state: FSMContext):
     
     user_state_data = await state.get_data()
     
-    user_data = UserData()
-    user_data.add_full_name(
+    user_data = UserData(
+        telegram_id=message.from_user.id,
+        username=message.from_user.username,
         first_name=user_state_data["first_name"],
         second_name=user_state_data["second_name"],
-        third_name=user_state_data["third_name"]
-    )
-    user_data.add_university_info(
+        third_name=user_state_data["third_name"],
         university_id=int(user_state_data["university_id"]),
         group_id=int(user_state_data["group_id"])
-    )
-    user_data.add_telegram_info(
-        telegram_id=message.from_user.id,
-        username=message.from_user.username
     )
     
     backend_adapter.registrate_user(user_data)
     
     await message.answer("Спасибо, регистрация прошла успешно")
-    await state.set_state()
+    await testing.show_info_about_test(state=state, bot=message.bot, chat_id=message.chat.id)
