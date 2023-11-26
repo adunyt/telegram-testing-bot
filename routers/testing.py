@@ -31,7 +31,7 @@ async def show_info_about_test(state: FSMContext, bot: Bot, chat_id: int):
     
 
 @testingRouter.callback_query(TestingStates.information_before_test)
-async def first_question(callback: CallbackQuery, state: FSMContext):
+async def start_test(callback: CallbackQuery, state: FSMContext):
     # Answer to callback
     await callback.message.answer("Начинаем!")
     await callback.answer()
@@ -63,9 +63,14 @@ async def save_question_result(option_ids: list[int], state: FSMContext):
 async def testing_cycle(poll_answer: PollAnswer, state: FSMContext):
     # Save answer
     await save_question_result(poll_answer.option_ids, state)
+    # Cancel countdown timer to detect skipped question 
     user_state_data = await state.get_data()
     autoclose_checker = user_state_data["autoclose_checker_task"]
     autoclose_checker.cancel()
+    # Close poll
+    poll_message_id = user_state_data["current_poll_message_id"]
+    await poll_answer.bot.stop_poll(chat_id=poll_answer.user.id, message_id=poll_message_id)
+    # Send next question
     await next_question(state=state, bot=poll_answer.bot, user_id=poll_answer.user.id)
     
 async def next_question(state: FSMContext, bot: Bot, user_id: int):
@@ -93,12 +98,15 @@ async def next_question(state: FSMContext, bot: Bot, user_id: int):
                         open_period=new_question.openTime,
                         is_anonymous=False,
                         protect_content=True)
+    # Save message id with poll
+    await state.update_data(current_poll_message_id=sended_message.message_id)
+    # Start countdown
     autoclose_checker = asyncio.create_task(autoclosed_poll_checker(sended_message.poll, user_id, state))
     await state.update_data(autoclose_checker_task=autoclose_checker)
     try:
         await autoclose_checker
     except asyncio.CancelledError:
-        logging.info("user answered, task cancelled")
+        logging.info("User answered, task cancelled")
     
 async def end_test(state: FSMContext, bot: Bot, user_id):
     # Getting test data
