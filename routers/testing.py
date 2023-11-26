@@ -1,8 +1,10 @@
 from aiogram import Router, F
-from aiogram.types import CallbackQuery, PollAnswer, Poll
+from aiogram.types import CallbackQuery, PollAnswer, Poll, Message
+import aiogram.types
 from aiogram.fsm.context import FSMContext
 import time
 import asyncio
+import logging
 
 from states import TestingStates
 from bot_types.test import TestData, TestStatistic
@@ -45,6 +47,9 @@ async def save_question_result(option_ids: list[int], state: FSMContext):
 async def testing_cycle(poll_answer: PollAnswer, state: FSMContext):
     # Save answer
     await save_question_result(poll_answer.option_ids, state)
+    user_state_data = await state.get_data()
+    autoclose_checker = user_state_data["autoclose_checker_task"]
+    autoclose_checker.cancel()
     await next_question(state=state, bot=poll_answer.bot, user_id=poll_answer.user.id)
     
 async def next_question(state: FSMContext, bot: Bot, user_id: int):
@@ -61,17 +66,24 @@ async def next_question(state: FSMContext, bot: Bot, user_id: int):
     if question_num == len(test_data.questions): 
         await end_test(state=state, bot=bot, user_id=user_id)
         return
+    
     # Get question
     new_question = test_data.questions[question_num] 
     # Send poll
-    await bot.send_poll(chat_id=user_id,
+    sended_message = await bot.send_poll(chat_id=user_id,
                         question=new_question.text,
                         allows_multiple_answers=new_question.is_multiple_answer,
                         options=[text for text in new_question.answers_dict.values()],
                         open_period=new_question.openTime,
                         is_anonymous=False)
+    autoclose_checker = asyncio.create_task(autoclosed_poll_checker(sended_message.poll, user_id, state))
+    await state.update_data(autoclose_checker_task=autoclose_checker)
+    try:
+        await autoclose_checker
+    except asyncio.CancelledError:
+        logging.info("user answered, task cancelled")
     
-async def end_test(state: FSMContext, bot, user_id):
+async def end_test(state: FSMContext, bot: Bot, user_id):
     # Getting test data
     user_state_data = await state.get_data()
     test_data: TestData = user_state_data["test_data"]
@@ -87,3 +99,14 @@ async def end_test(state: FSMContext, bot, user_id):
     await bot.send_message(chat_id=user_id, text=test_ending_txt)
     await state.set_state(None)
     
+    
+
+async def autoclosed_poll_checker(poll: Poll, user_id: int, state: FSMContext):
+    user_state_data = await state.get_data()
+    question_num = user_state_data["current_question_index"]
+    await asyncio.sleep(poll.open_period)
+    new_user_state_data = await state.get_data()
+    new_question_num = new_user_state_data["current_question_index"]
+    if (question_num == new_question_num):
+        await save_question_result([], state)
+        await next_question(state=state, bot=poll.bot, user_id=user_id)
