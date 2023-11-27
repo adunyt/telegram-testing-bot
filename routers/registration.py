@@ -5,7 +5,7 @@ import re
 
 from states import RegisterStates
 from bot_types.user_data import UserData
-from backend_adapter import FakeBackendAdapter
+from adapters.fake_backend_adapter import FakeBackendAdapter
 from routers import testing
 
 registrationRouter = Router()

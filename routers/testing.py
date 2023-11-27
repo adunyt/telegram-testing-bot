@@ -1,5 +1,5 @@
-from aiogram import Router, F
-from aiogram.types import CallbackQuery, PollAnswer, Poll, Message
+from aiogram import Router
+from aiogram.types import CallbackQuery, PollAnswer, Poll
 from aiogram import types
 from aiogram.fsm.context import FSMContext
 import time
@@ -9,8 +9,8 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 
 from states import TestingStates
-from bot_types.test import TestData, TestStatistic
-from backend_adapter import FakeBackendAdapter
+from bot_types.test import TestData
+from adapters.fake_backend_adapter import FakeBackendAdapter
 from aiogram import Bot
 
 testingRouter = Router()

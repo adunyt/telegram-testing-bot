@@ -1,12 +1,11 @@
 from aiogram import Router, F
 from aiogram.filters import Command, CommandStart, CommandObject, StateFilter
-from aiogram.types import Message, InlineKeyboardButton
+from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
-from aiogram.utils.keyboard import InlineKeyboardBuilder
 import re
 
-from states import RegisterStates, TestingStates
-from backend_adapter import FakeBackendAdapter
+from states import RegisterStates
+from adapters.fake_backend_adapter import FakeBackendAdapter
 from routers import testing
 
 commandRouter = Router()
