@@ -6,7 +6,8 @@ class FakeBackendAdapter(BackendAdapterBase):
     tests = {
         1: TestData(
             id=1,
-            name="First test",
+            name="Тест по информатике",
+            description="Простой тест из 4 вопросов по базовым вещам в информатики. Время на прохождения теста приблизительно 4 минуты",
             questions=[
                 Question(
                     id=1,
